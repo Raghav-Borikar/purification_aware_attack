@@ -62,7 +62,8 @@ class PurificationAwareAttack:
         momentum = torch.zeros_like(img_emb).to(self.device)
         
         # Initialize purified embedding with a copy that requires gradients
-        purified_emb = img_emb.clone().requires_grad_(True)
+        purified_emb = img_emb
+        purified_emb.requires_grad_(True)
         
         # Simulate purification steps
         for _ in range(self.purification_steps):
@@ -179,10 +180,10 @@ class PurificationAwareAttack:
                 
             # Forward pass to get image embeddings
 #            with torch.enable_grad():
-            adv_images = images + delta
-
+            adv_images = (images + delta).requires_grad_(True)
+            
             try:
-                img_emb = self.model.embed_image(adv_images)
+                img_emb = self.model.embed_image(adv_images, purify=True)
                 
                 # Simulate purification process
                 purified_emb = self.simulate_purification(img_emb, template_emb)
@@ -198,6 +199,8 @@ class PurificationAwareAttack:
                 #print(f"Loss value: {loss.item()}")
 
                 loss.backward()
+                
+                #print("delta.grad:", delta.grad)
 
                 if delta.grad is None:
                     print("ERROR: No gradients computed despite delta requiring gradients")

@@ -110,31 +110,20 @@ class CLIPureModel(nn.Module):
         """
         return self.blank_template_embedding
     
-    def embed_image(self, images):
+    def embed_image(self, images, purify=False):
         if images.shape[-1] != 224 or images.shape[-2] != 224:
             images = F.interpolate(images, size=(224, 224), mode='bicubic', align_corners=False)
 
         images = images.to(self.device)
 
-        # Enable gradients for image encoder
-        was_training = self.clip_model.training
-        self.clip_model.train()  # 👈 TEMPORARILY enable train mode to allow gradients
-
-        # Forward pass with gradient computation
-        with torch.set_grad_enabled(True):
+        with torch.set_grad_enabled(purify):  # ✅ enable gradients only during purification
+            if purify:
+                images.requires_grad_(True)
             image_features = self.clip_model.encode_image(images)
             image_features = F.normalize(image_features, dim=-1)
 
-        if not was_training:
-            self.clip_model.eval()  # 👈 Restore original mode
-
-            # Ensure gradient tracking is enabled
-        if not image_features.requires_grad:
-            image_features = image_features.clone().requires_grad_(True)
-    
         return image_features
-
-    
+   
     def embed_text(self, texts):
         """
         Encode texts into CLIP's embedding space.
@@ -208,11 +197,12 @@ class CLIPureModel(nn.Module):
         batch_size = img_emb.shape[0]
         
         # Ensure img_emb requires gradient
+        #img_emb = img_emb.requires_grad_(True)
         img_emb = img_emb.clone().detach().requires_grad_(True)
         
         # Initialize blank template embedding
-        text_embed = self.blank_template_embedding.repeat(batch_size, 1).to(self.device)
-        text_embed.requires_grad_(True)
+        text_embed = self.blank_template_embedding.repeat(batch_size, 1).to(self.device).detach()
+        #text_embed.requires_grad_(True)
         # Initialize momentum
         momentum = torch.zeros_like(img_emb)
         
@@ -236,8 +226,14 @@ class CLIPureModel(nn.Module):
             if not img_emb.requires_grad:
                 raise RuntimeError("img_emb does not require grad — cannot purify")
 
-            grad = torch.autograd.grad(loss, img_emb, create_graph=True)[0]  # create_graph if you need higher-order grads
+            if img_emb.grad is not None:
+                img_emb.grad.zero_()
             
+            loss.backward(retain_graph=True)
+            grad = img_emb.grad
+            if grad is None:
+                raise RuntimeError("Gradient for img_emb is None after backward.")
+
             # Update with momentum
             grad_u = r * grad
             
@@ -253,10 +249,11 @@ class CLIPureModel(nn.Module):
             
             # Update embedding
             if i < self.purification_steps - 1:
-                img_emb = (r * u).clone().detach().requires_grad_(True)
+                img_emb = (r * u).detach().requires_grad_(True)
+
             else:
-                img_emb = r * u
-        
+                img_emb = (r * u)
+
         return img_emb
     
     def compute_logits(self, img_emb, class_embeddings=None):
@@ -298,10 +295,10 @@ class CLIPureModel(nn.Module):
             Logits
         """
         # Encode images
-        img_emb = self.embed_image(images)
-        
+        img_emb = self.embed_image(images, purify=purify)
         # Purify embeddings only if flag is True
         if purify:
+            img_emb = img_emb.clone().detach().requires_grad_(True)
             img_emb = self.purify_zi(img_emb)
         
         # Get class embeddings

@@ -73,8 +73,8 @@ def evaluate_robustness(model, attack, dataloader, classes, device, save_dir=Non
         adv_images = attack(images, labels)
         
         # Forward pass with CLIPure
-        with torch.no_grad():
-            predictions, _ = model.classify(adv_images, classes)
+        #with torch.no_grad():
+        predictions, _ = model.classify(adv_images, classes)
         
         # Update statistics
         correct += (predictions == labels).sum().item()
@@ -175,9 +175,9 @@ def run_evaluation(config):
         json.dump({k: str(v) for k, v in config.items()}, f, indent=2)
     
     # Evaluate clean accuracy
-    print("Evaluating clean accuracy...")
-    clean_accuracy = evaluate_accuracy(clipure_model, test_loader, class_names, device)
-    print(f"Clean accuracy: {clean_accuracy:.2f}%")
+    #print("Evaluating clean accuracy...")
+    #clean_accuracy = evaluate_accuracy(clipure_model, test_loader, class_names, device)
+    #print(f"Clean accuracy: {clean_accuracy:.2f}%")
     
     # Evaluate robust accuracy
     print("Evaluating robust accuracy...")

@@ -167,14 +167,14 @@ def save_images_with_predictions(original_images, adversarial_images, true_label
         orig_img = original_images[i].permute(1, 2, 0).cpu().numpy()
         orig_img = np.clip(orig_img, 0, 1)
         axes[0, i].imshow(orig_img)
-        axes[0, i].set_title(f"True: {class_names[true_labels[i]]}")
+        axes[0, i].set_title(f"True: {class_names[true_labels[i].detach().cpu().item()]}")
         axes[0, i].axis('off')
         
         # Adversarial image
-        adv_img = adversarial_images[i].permute(1, 2, 0).cpu().numpy()
+        adv_img = adversarial_images[i].permute(1, 2, 0).detach().numpy()
         adv_img = np.clip(adv_img, 0, 1)
         axes[1, i].imshow(adv_img)
-        axes[1, i].set_title(f"Pred: {class_names[predicted_labels[i]]}")
+        axes[1, i].set_title(f"Pred: {class_names[predicted_labels[i].detach().cpu().item()]}")
         axes[1, i].axis('off')
     
     plt.tight_layout()
