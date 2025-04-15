@@ -34,7 +34,7 @@ def evaluate_accuracy(model, dataloader, classes, device):
         labels = labels.to(device)
         
         # Forward pass with gradient computation enabled
-        with torch.enable_grad():  # Important: enable gradients during evaluation
+        with torch.amp.autocast(device_type=device.type, dtype=torch.float16 if device.type == 'cuda' else None, enabled=(device.type == 'cuda')):  # Important: enable gradients during evaluation
             predictions, _ = model.classify(images, classes, purify=False)
         
         # Update statistics
@@ -69,12 +69,13 @@ def evaluate_robustness(model, attack, dataloader, classes, device, save_dir=Non
         images = images.to(device)
         labels = labels.to(device)
         
-        # Generate adversarial examples
-        adv_images = attack(images, labels)
+        with torch.amp.autocast(device_type=device.type, dtype=torch.float16 if device.type == 'cuda' else None, enabled=(device.type == 'cuda')):
+            # Generate adversarial examples
+            adv_images = attack(images, labels)
         
-        # Forward pass with CLIPure
-        #with torch.no_grad():
-        predictions, _ = model.classify(adv_images, classes)
+            # Forward pass with CLIPure
+            #with torch.no_grad():
+            predictions, _ = model.classify(adv_images, classes)
         
         # Update statistics
         correct += (predictions == labels).sum().item()
@@ -149,6 +150,8 @@ def run_evaluation(config):
         logit_scale=config['logit_scale']
     ).to(device)
     
+    clipure_model = torch.compile(clipure_model, mode='reduce-overhead')
+
     # Initialize Purification-Aware Attack
     print("Initializing Purification-Aware Attack...")
     paa = PurificationAwareAttack(
@@ -175,9 +178,9 @@ def run_evaluation(config):
         json.dump({k: str(v) for k, v in config.items()}, f, indent=2)
     
     # Evaluate clean accuracy
-    #print("Evaluating clean accuracy...")
-    #clean_accuracy = evaluate_accuracy(clipure_model, test_loader, class_names, device)
-    #print(f"Clean accuracy: {clean_accuracy:.2f}%")
+    print("Evaluating clean accuracy...")
+    clean_accuracy = evaluate_accuracy(clipure_model, test_loader, class_names, device)
+    print(f"Clean accuracy: {clean_accuracy:.2f}%")
     
     # Evaluate robust accuracy
     print("Evaluating robust accuracy...")

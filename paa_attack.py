@@ -167,7 +167,8 @@ class PurificationAwareAttack:
 
             delta = torch.clamp(images + delta, 0, 1) - images
             
-        delta.requires_grad = True    
+        delta.requires_grad = True  
+          
         # Attack optimization loop
         
         for step in range(self.steps):
@@ -205,13 +206,6 @@ class PurificationAwareAttack:
                 if delta.grad is None:
                     print("ERROR: No gradients computed despite delta requiring gradients")
                     raise RuntimeError("Gradients not computed for delta. Check computational graph.")
-                # Verify gradients were computed
-#                if delta_step.grad is None:
-#                    print("ERROR: No gradients computed despite delta requiring gradients")
-#                    print(f"img_emb.requires_grad: {img_emb.requires_grad}")
-#                    print(f"purified_emb.requires_grad: {purified_emb.requires_grad}")
-#                    print(f"loss.requires_grad: {loss.requires_grad}")
-#                    raise RuntimeError("Gradients not computed for delta. Check computational graph.")
 
 #                Update delta with projected gradient descent
                 with torch.no_grad():
