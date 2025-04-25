@@ -63,9 +63,11 @@ Replace <dataset> with cifar10, cifar100, or imagenet.
 python main.py --dataset <dataset>
 ```
 
+```bibtex
 @misc{clipurepaa2025,
   author = {Raghav Borikar and Byomakesh Panda},
   title = {Defeating CLIPure-Cos with Purification-Aware Attack},
   year = {2025},
   note = {Project Report, CS607 - Adversarial Machine Learning}
 }
+```
