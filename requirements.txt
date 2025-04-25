@@ -1,0 +1,6 @@
+robustbench==1.1.1
+open_clip-torch==2.32.0
+torch==2.6.0+cu124
+torchaudio==2.6.0+cu124
+torchvision==0.21.0+cu124
+tqdm==4.67.1
