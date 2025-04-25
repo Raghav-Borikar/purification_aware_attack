@@ -12,11 +12,17 @@ This repository contains the implementation of our project: **"Defeating CLIPure
 
 ## 🗂 Project Structure
 ├── main.py # Entry point for running experiments
-├── requirements.txt # Python dependencies 
+
+├── requirements.txt # Python dependencies
+
 ├── config.py # Configuration file
+
 ├── clipuremodel.py # CLIP model & utilities
+
 ├── paa_attack.py # Purification aware attack implementation
+
 ├── evaluation.py # Integration code
+
 └── utils.py # Preprocessing, logging, evaluation utilities
 
 ---
@@ -45,7 +51,7 @@ CIFAR-10 & CIFAR-100 will be automatically downloaded.
 
 ImageNet: You must manually download and specify its location in config.py.
 
-# Example config.py snippet
+#### Example config.py snippet
 ```bash
 imagenet_path: /path/to/imagenet/
 ```
@@ -56,6 +62,7 @@ Replace <dataset> with cifar10, cifar100, or imagenet.
 ```bash
 python main.py --dataset <dataset>
 ```
+
 @misc{clipurepaa2025,
   author = {Raghav Borikar and Byomakesh Panda},
   title = {Defeating CLIPure-Cos with Purification-Aware Attack},
